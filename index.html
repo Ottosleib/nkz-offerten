@@ -25,7 +25,7 @@ button:hover{background:#de1f4b}
 <div id="err">Falsches Passwort</div>
 </div>
 <script>
-const SALT="kdPPlgzlyexlSgDB3JQ6HQ==",NONCE="6LQFoe7OuLpYBnNE";
+const SALT="wWkrfYdG/dDwjrZ6Aa56kg==",NONCE="IoAPvEP4Kye1Thki";
 const fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function unlock(){
   const pw=document.getElementById("pw").value;
@@ -36,8 +36,11 @@ async function unlock(){
       {name:"AES-GCM",length:256},false,["decrypt"]);
     const gz=await crypto.subtle.decrypt({name:"AES-GCM",iv:fromB64(NONCE)},key,fromB64(window.CTP.join("")));
     const ds=new DecompressionStream("gzip");
-    const pt=await new Response(new Blob([gz]).stream().pipeThrough(ds)).text();
-    document.open();document.write(pt);document.close();
+    let pt=await new Response(new Blob([gz]).stream().pipeThrough(ds)).text();
+    /* URL-Parameter als PREFILL in die Seite injizieren */
+    const params={}; new URLSearchParams(location.search).forEach((v,k)=>params[k]=v);
+    pt=pt.replace("/*__PREFILL__*/","const PREFILL="+JSON.stringify(params)+";");
+    location.replace(URL.createObjectURL(new Blob([pt],{type:"text/html"})));
   }catch(e){document.getElementById("err").style.display="block";}
 }
 document.getElementById("go").onclick=unlock;
